@@ -1,21 +1,28 @@
 build-and-release-ios:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: main
 
       - name: Flutter action
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.16.8
+          # Using a newer Flutter version to match your pubspec environment
+          flutter-version: 3.22.0 
           channel: stable
 
-      - name: Force Dependency Override
+      - name: Patch Dependencies
         run: |
-          # Manually append the override to the pubspec.yaml to bypass the conflict
+          # 1. Remove the strict versioning for flutter_i18n
+          sed -i '' 's/flutter_i18n: ^0.35.0/flutter_i18n: any/g' pubspec.yaml
+          
+          # 2. Inject dependency overrides at the end of the file
+          echo "" >> pubspec.yaml
           echo "dependency_overrides:" >> pubspec.yaml
-          echo "  intl: 0.18.1" >> pubspec.yaml
+          echo "  intl: any" >> pubspec.yaml
+          
+          # 3. Get dependencies
           flutter pub get
 
       - name: Build iOS Frameworks (No Sign)
@@ -23,6 +30,7 @@ build-and-release-ios:
 
       - name: Create Unsigned IPA
         run: |
+          # The classic Payload trick for sideloading
           mkdir -p Payload
           mv build/ios/iphoneos/Runner.app Payload/
           zip -r Miru-Unsigned.ipa Payload
