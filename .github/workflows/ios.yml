@@ -11,10 +11,11 @@ build-and-release-ios:
           flutter-version: 3.16.8
           channel: stable
 
-      - name: Resolve dependencies
+      - name: Force Dependency Override
         run: |
-          # This forces flutter to find a compatible version of intl
-          flutter pub upgrade --major-versions
+          # Manually append the override to the pubspec.yaml to bypass the conflict
+          echo "dependency_overrides:" >> pubspec.yaml
+          echo "  intl: 0.18.1" >> pubspec.yaml
           flutter pub get
 
       - name: Build iOS Frameworks (No Sign)
