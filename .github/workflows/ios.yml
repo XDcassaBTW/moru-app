@@ -1,0 +1,39 @@
+build-and-release-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Flutter action
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.16.8
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS Frameworks (No Sign)
+        run: flutter build ios --release --no-codesign
+
+      - name: Create Unsigned IPA
+        run: |
+          mkdir -p Payload
+          mv build/ios/iphoneos/Runner.app Payload/
+          zip -r Miru-Unsigned.ipa Payload
+          mkdir -p build/ios/release
+          mv Miru-Unsigned.ipa build/ios/release/Miru-${{github.ref_name}}-ios-unsigned.ipa
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          path: "build/ios/release/Miru-${{github.ref_name}}-ios-unsigned.ipa"
+          name: Miru-${{github.ref_name}}-ios-unsigned.ipa
+
+      - name: Release Packages
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "build/ios/release/*.ipa"
+          allowUpdates: true
+          omitBody: true
