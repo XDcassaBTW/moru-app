@@ -11,8 +11,11 @@ build-and-release-ios:
           flutter-version: 3.16.8
           channel: stable
 
-      - name: Install dependencies
-        run: flutter pub get
+      - name: Resolve dependencies
+        run: |
+          # This forces flutter to find a compatible version of intl
+          flutter pub upgrade --major-versions
+          flutter pub get
 
       - name: Build iOS Frameworks (No Sign)
         run: flutter build ios --release --no-codesign
